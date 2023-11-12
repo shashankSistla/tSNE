@@ -6,7 +6,7 @@ from math import ceil
 
 from sklearn.preprocessing import StandardScaler
 from sklearn.decomposition import PCA
-from mpl_toolkits.axes_grid import make_axes,locatable, axes_size
+from mpl_toolkits.axes_grid1 import make_axes,locatable, axes_size
 from sklearn.manifold import TSNE
 import matplotlib.cm as cm
 
@@ -31,9 +31,9 @@ def compute_tsne_datasets(input_df, output_dir, columns_exclude, n_components_pc
     
     for perp in perp_list:
         tsne_df = perform_tsne(final, perp=perp, n_iter = n_iter, learning_rate = learning_rate)
-        tsne_df.to_csv(final, perp=perp, n_iter = n_iter, learning_rate = learning_rate)
+        tsne_df.to_csv(f"{output_dir}/tsne_{perp}.csv", index = False)
 
-    input_df.to_csv(f"{output_dir}/tsne_{perp}.csv", index=False)
+    input_df.to_csv(f"{output_dir}/all_columns.csv", index=False)
 
 def colorbar(mappable):
     last_axes = plt.gca()
@@ -56,7 +56,7 @@ def get_tsne_plot(output_dir, perp, group_column=None, selected_groups=None, s =
     group_column = group_column[0] if group_column else None
 
     if group_column and selected_groups:
-        print("Can't plot both groups and selected indicies, use either --groups or --selected, not both!")
+        print("Can't plot both groups and selected indices, use either --groups or --selected, not both!")
         return
 
     if selected_groups:
@@ -105,7 +105,7 @@ def perform_tsne(input_df, perp = 25, n_iter = 1000, learning_rate = 'auto'):
     if n_iter:
         tsne = TSNE(n_components = 2, init = 'random', perplexity = perp, random_state = 42, n_iter_without_progress = 300, learning_rate = learning_rate, n_iter = 10000)
     else:
-        tsne = TSNE(n_components = 2, init = 'random', learning_rate = 'autp', perplexity = perp, random_state = 42)
+        tsne = TSNE(n_components = 2, init = 'random', learning_rate = 'auto', perplexity = perp, random_state = 42)
 
     X = tsne.fit_transform(input_df)
     print(f"TSNE ran for {tsne.n_iter} iterations")
@@ -131,7 +131,7 @@ def get_tsne_plots_perplexities(tsne_dir, perplexities = None, group_columns = N
         axes = axes.reshape(1, -1)
 
     if group_column and selected_groups:
-        print("Can't plot btoh groups and selected indices, use either -- groups or --selected, not both!")
+        print("Can't plot btoh groups and selected indices, use either --groups or --selected, not both!")
         return
     
     if selected_groups:
@@ -143,6 +143,7 @@ def get_tsne_plots_perplexities(tsne_dir, perplexities = None, group_columns = N
             for group in selected_groups:
                 indices = read_from_pickle(group)
                 list_indices = list(indices)
+                indices_dict[group] = list_indices
                 df.loc[list_indices, 'selected'] = group
 
         for i, df in enumerate(dfs):
@@ -165,7 +166,7 @@ def get_tsne_plots_perplexities(tsne_dir, perplexities = None, group_columns = N
         for i, df in enumerate(dfs):
             df = dfs[i]
             groups = df[group_column].unique()
-            ax_idx = i // 2
+            ax_idx1 = i // 2
             ax_idx2 = i % 2
 
             if group_type == 'discrete':

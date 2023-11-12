@@ -35,17 +35,12 @@ def process_arguments():
         help= "Specified the directory where the tool's output will be saved"
     )
     parser.add_argument(
-        '--columns_exclude'
+        '--columns_exclude',
         type=str,
         nargs = '+',
-        help= "Specified the directory where the tool's output will be saved",
+        help= "Array of columns which should be excluded when performing t-SNE",
     )
-    parser.add_argument(
-        '--columns_exclude',
-        type= str,
-        nargs = '+',
-        help="Array of columns which should be excluded when performing t-SNE"
-    )
+
     parser.add_argument(
         '--perplexities',
         type= int,
@@ -115,13 +110,13 @@ def set_default_args(args, conf):
     return args
 
 def main():
-    # TODO: WOrk on logging all actions
+    # TODO: Work on logging all actions
     # TODO: Add checks for every edge case
 
     args = process_arguments()
 
     conf_dir = os.getcwd() + f'/keys/{args.key}/conf.json'
-    output_dir = os.getcwd() + f'/keys/{args.key}/tSNE_dsata'
+    output_dir = os.getcwd() + f'/keys/{args.key}/tSNE_data/'
 
     f = open(conf_dir)
 
@@ -141,10 +136,10 @@ def main():
             pwd = os.getcwd()
             for perp in args.perplexities:
                 if is_previously_computed(output_dir, perp):
-                    print(f"t_SNE has already been computed for perplexity = {perp}, skipping computation")
+                    print(f"t_SNE has already been computed for perplexity = {perp}, skipping computation.")
 
                 else:
-                    f.writelines([f'python {pwd}/clt.py --action compute --input_file {conf["input_file"]} --output_dir {output_dir} --perplexities {perp} --columns_exclude {" ".join(conf["columns_exclude"])} --learning_rate {conf["learning_rate"]} --n_iter {conf["n_iter"]} --n_components_pca {conf["n_components_pca"]}\n'])
+                    f.writelines([f'python {pwd}/clt.py --action compute --input_file {conf["input_file"]} --output_dir {output_dir} --perplexities {perp} --columns_exclude {" ".join(conf["columns_exclude"])} --learning_rate {conf["learning_rate"]} --early_exaggeration {conf["early_exaggeration"]}  --n_iter {conf["n_iter"]} --n_components_pca {conf["n_components_pca"]}\n'])
             print("Generated 00master script. Run it to compute TSNE values for above mentioned perplexities")
 
         else:
@@ -152,7 +147,7 @@ def main():
                 if is_previously_computed(output_dir, perp):
                     print(f"t=SNE has already been computed for perplexity = {perp}, skipping computation")
                 else:
-                    compute_tsne_datasets(input_df, output_dir, args.columns_exclude, args.n_iter, args.learning_rate)
+                    compute_tsne_datasets(input_df, output_dir, args.columns_exclude, args.n_components_pca, args.perplexities, args.n_iter, args.learning_rate)
 
     elif args.action == 'plot':
 
@@ -162,7 +157,7 @@ def main():
                 print(f"t-SNE values for perplexity = {perp} has not been computed. Compute the values using --action compte and then plot. ")
                 return
         
-        if args.perplexities and len(args.perplexities) > 1 and args.group_columns and len(args.group_cokumns) > 1:
+        if args.perplexities and len(args.perplexities) > 1 and args.group_columns and len(args.group_columns) > 1:
             print("Can't have multiple perplexities AND group columns. Make one of them singular to plot")
         elif args.perplexities and len(args.perplexities) > 1:
             get_tsne_plots_perplexities(output_dir, perplexities = args.perplexities, group_columns = args.group_columns, selected_groups = args.selected, s = 0.05)

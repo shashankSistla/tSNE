@@ -6,7 +6,7 @@ import pandas as pd
 import json
 
 from bokeh.plotting import figure, show
-from bokeh.models import HOverTool, LinearColorMapper, ColorBar
+from bokeh.models import LinearColorMapper, ColorBar
 from bokeh.models import ColumnDataSOurce, HoverTool, CustomJS
 from boeh.transform import factor_cmap, linear_cmap
 from bokeh.io import output_notebook
@@ -19,7 +19,7 @@ import pickle
 
 def custom_formatter_numeric(x):
     try:
-        return "{:. .3g}".format(x)
+        return "{:,.3g}".format(x)
     except:
         return x
     
@@ -30,11 +30,11 @@ def get_hover_columns(key):
     return conf['hover_columns']
 
 
-def get_exclude_columns(key):
+def get_columns_exclude(key):
     conf_dir = os.getcwd() + f'/keys/{key}/conf.json'
     f = open(conf_dir)
     conf = json.load(f)
-    return conf['exclude_columns']
+    return conf['columns_exclude']
 
 def get_stat_test_columns(key):
     conf_dir = os.getcwd() + f'/keys/{key}/conf.json'
@@ -43,7 +43,7 @@ def get_stat_test_columns(key):
     return conf['stat_test_columns']
 
 def get_input_file(key):
-    conf_dir = os.getcwd() + f'/keys/{key}/conf.json'
+    conf_dir = os.getcwd() + f'/conf.json'
     f = open(conf_dir)
     conf = json.load(f)
     return conf['input_file']
@@ -100,7 +100,7 @@ class SelectorInterface:
         self.log = ""
         self.key_list = get_key_list()
         self.key = self.key_list[0]
-        self.filters_df = pd.DataFrame(columns = ['column', 'Type', 'Values'])
+        self.filters_df = pd.DataFrame(columns = ['Column', 'Type', 'Values'])
         self.data_df = pd.read_csv(get_input_file(), low_memory=False)
         self.is_data_loaded = False
         self.groupby_column = None
@@ -148,7 +148,8 @@ class SelectorInterface:
     def display_widgets_interface(self):
         display(widgets.VBox([
             widgets.HBox([self.key_dropdown, self.create_filter_button, self.save_filters_to_key_button]),
-            widgets.VBox([self.filter_view_output, self.create_filter_output, self.apply_filters_button, self.filtered_data_output])
+            widgets.VBox([self.filter_view_output, self.create_filter_output, self.apply_filters_button, self.filtered_data_output]),
+            self.message_output
         ]))
 
         display(self.perplexity_dropdown, self.compute_analysis_button, self.bokeh_plot_output, self.file_input, self.save_button, self.error_message_output)
@@ -203,9 +204,10 @@ class SelectorInterface:
 
     def on_save_button_clicked(self, event):
         with self.error_message_output:
-            filename = self.file_input.value if not filename:
-            print("Error: Please provide a filename")
-
+            filename = self.file_input.value
+            if not filename:
+                print("Error: Please provide a filename")
+                return 
         filepath = f"./keys/{self.key}/stored_indices/{filename}.pkl"
 
         if os.path.exists(filepath):
